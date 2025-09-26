@@ -109,12 +109,6 @@ show_help() {
     echo "  pazman list              List all saved services"
     echo "  pazman delete <service>  Delete a password"
     echo "  pazman help              Show this help"
-    echo
-    echo "Examples:"
-    echo "  pazman set twitter"
-    echo "  pazman get twitter"
-    echo "  pazman list"
-    echo "  pazman delete twitter"
 }
 
 case "$1" in

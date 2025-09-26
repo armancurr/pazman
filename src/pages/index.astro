@@ -1,0 +1,37 @@
+---
+
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>Pazman - Installation</title>
+		<style>
+			body {
+				background-color: black;
+				color: white;
+				font-family: monospace;
+				margin: 0;
+				padding: 0;
+				height: 100vh;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+			}
+			.install-command {
+				font-size: 1.2rem;
+				font-weight: bold;
+				margin: 1rem 0;
+				word-break: break-all;
+			}
+		</style>
+	</head>
+	<body>
+			<div class="install-command">
+				curl -L https://pazman.vercel.app/install.sh | bash
+			</div>
+	</body>
+</html>
