@@ -1,0 +1,141 @@
+#!/bin/bash
+
+PAZMAN_DIR="$HOME/pazman"
+
+mkdir -p "$PAZMAN_DIR"
+
+generate_password() {
+    openssl rand -base64 32 | tr -d "=+/" | cut -c1-25
+}
+
+copy_to_clipboard() {
+    if command -v pbcopy >/dev/null 2>&1; then
+        echo -n "$1" | pbcopy
+    elif command -v xclip >/dev/null 2>&1; then
+        echo -n "$1" | xclip -selection clipboard
+    elif command -v xsel >/dev/null 2>&1; then
+        echo -n "$1" | xsel --clipboard --input
+    elif command -v clip >/dev/null 2>&1 || command -v clip.exe >/dev/null 2>&1; then
+        echo -n "$1" | clip
+    else
+        echo "Error: No clipboard utility found."
+        echo "For Windows/Git Bash: This should work with built-in 'clip' - if not, ensure Windows PATH includes system32."
+        echo "For Linux: Install xclip or xsel (e.g., 'pacman -S xclip' on MSYS2)."
+        echo "For macOS: pbcopy is built-in."
+        return 1
+    fi
+}
+
+set_password() {
+    local service="$1"
+    if [[ -z "$service" ]]; then
+        echo "Usage: pazman set <service_name>"
+        return 1
+    fi
+    
+    local password_file="$PAZMAN_DIR/${service}.txt"
+    local password=$(generate_password)
+    
+    echo "$password" > "$password_file"
+    chmod 600 "$password_file"
+    
+    echo "Password for '$service' has been generated and saved!"
+    echo "Password copied to clipboard"
+    copy_to_clipboard "$password"
+}
+
+get_password() {
+    local service="$1"
+    if [[ -z "$service" ]]; then
+        echo "Usage: pazman get <service_name>"
+        return 1
+    fi
+    
+    local password_file="$PAZMAN_DIR/${service}.txt"
+    
+    if [[ ! -f "$password_file" ]]; then
+        echo "No password found for '$service'"
+        echo "Use 'pazman set $service' to create one"
+        return 1
+    fi
+    
+    local password=$(cat "$password_file")
+    copy_to_clipboard "$password"
+    echo "Password for '$service' copied to clipboard!"
+}
+
+list_services() {
+    echo "Saved passwords:"
+    if [[ -n $(ls "$PAZMAN_DIR"/*.txt 2>/dev/null) ]]; then
+        for file in "$PAZMAN_DIR"/*.txt; do
+            local service=$(basename "$file" .txt)
+            echo "  • $service"
+        done
+    else
+        echo "  No passwords saved yet"
+    fi
+}
+
+delete_password() {
+    local service="$1"
+    if [[ -z "$service" ]]; then
+        echo "Usage: pazman delete <service_name>"
+        return 1
+    fi
+    
+    local password_file="$PAZMAN_DIR/${service}.txt"
+    
+    if [[ ! -f "$password_file" ]]; then
+        echo "No password found for '$service'"
+        return 1
+    fi
+    
+    read -p "Are you sure you want to delete the password for '$service'? (y/N): " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        rm "$password_file"
+        echo "Password for '$service' has been deleted"
+    else
+        echo "Operation cancelled"
+    fi
+}
+
+show_help() {
+    echo "Pazman - Simple Password Manager"
+    echo
+    echo "Usage:"
+    echo "  pazman set <service>     Generate and save a password"
+    echo "  pazman get <service>     Get password and copy to clipboard"
+    echo "  pazman list              List all saved services"
+    echo "  pazman delete <service>  Delete a password"
+    echo "  pazman help              Show this help"
+    echo
+    echo "Examples:"
+    echo "  pazman set twitter"
+    echo "  pazman get twitter"
+    echo "  pazman list"
+    echo "  pazman delete twitter"
+}
+
+case "$1" in
+    "set")
+        set_password "$2"
+        ;;
+    "get")
+        get_password "$2"
+        ;;
+    "list"|"ls")
+        list_services
+        ;;
+    "delete"|"del"|"rm")
+        delete_password "$2"
+        ;;
+    "help"|"--help"|"-h"|"")
+        show_help
+        ;;
+    *)
+        echo "Unknown command: $1"
+        echo "Use 'pazman help' for usage information"
+        exit 1
+        ;;
+esac
